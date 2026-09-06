@@ -183,7 +183,10 @@ async function loadAdminData() {
             commentTableBody.innerHTML = data.comments.map(c => `
                 <tr>
                     <td>${escapeHtml(c.article_slug)}</td>
-                    <td>${escapeHtml(c.name || 'Anonim')} <br><small style="color:#718096;">${escapeHtml(c.email || '-')}</small></td>
+                    <td>
+                        <strong>${escapeHtml(c.name || 'Anonim')}</strong><br>
+                        <small style="color:#718096;">❤️ ${c.likes || 0} Suka • ${escapeHtml(c.created_at || '')}</small>
+                    </td>
                     <td>${escapeHtml(c.message)}</td>
                     <td><button type="button" class="btn-danger" onclick="deleteComment(${c.id})">Hapus</button></td>
                 </tr>

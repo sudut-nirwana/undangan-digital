@@ -1,156 +1,220 @@
-<section class="post-comments" data-slug="{{ page.slug }}">
-  <h3 class="comments-title">Komentar</h3>
-  <div id="formWrapper">
-    <form id="commentForm" class="comment-form">
-      <input type="hidden" id="replyParentId" value="">
-      <div class="form-group"><input type="text" id="commentName" placeholder="Masukan Nama Anda" required></div>
-      <div class="form-group"><input type="email" id="commentEmail" placeholder="contoh@gmail.com" required></div>
-      <div class="form-group"><textarea id="commentMessage" rows="3" placeholder="Tulis komentar Anda..." required></textarea></div>
-      <div class="form-group-checkbox" style="margin-bottom: 12px; font-size: 14px;">
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" id="newsletterCheckbox" checked> Kirimkan juga update artikel terbaru via email ini
-        </label>
-      </div>
-      <div id="replyingIndicator" style="font-size: 13px; color: #0070f3; margin-bottom: 8px; display: none;">
-        Membalas komentar... <button type="button" onclick="cancelReply()" style="background:none; border:none; color:red; cursor:pointer; padding:0;">Batalkan</button>
-      </div>
-      <button type="submit" class="btn-submit" id="submitCommentBtn">Kirim Komentar</button>
+<div class="comments-section">
+    <h3>Komentar</h3>
+    
+    <!-- Form Komentar -->
+    <form id="commentForm">
+        <div id="emailInputWrapper" style="margin-bottom: 1rem;">
+            <input type="email" id="commentEmail" placeholder="Email Anda (Nama & centang biru otomatis)" required>
+        </div>
+        
+        <!-- Notifikasi Email Terverifikasi -->
+        <div id="emailVerifiedNotice" style="margin-bottom: 1rem; font-size: 0.875rem; color: #1a73e8; display: none; font-weight: 500;"></div>
+
+        <div style="margin-bottom: 1rem;">
+            <input type="text" id="commentName" placeholder="Nama Anda" required style="width: 100%; padding: 0.75rem 1rem; background-color: #fff; border: 1px solid var(--color-border, #cbd5e1); border-radius: var(--radius-sm, 6px); font-size: 0.95rem; margin-bottom: 0.75rem; box-sizing: border-box;">
+            <textarea id="commentMessage" placeholder="Tulis komentar Anda di sini..." rows="4" required></textarea>
+        </div>
+
+        <div style="margin-bottom: 1rem;" id="newsletterWrapper">
+            <label>
+                <input type="checkbox" id="newsletterCheckbox"> Berlangganan update artikel terbaru via email ini
+            </label>
+        </div>
+
+        <input type="hidden" id="replyParentId" value="">
+        <button type="submit" id="submitCommentBtn">Kirim Komentar</button>
+        
+        <!-- Peringatan Batas Harian -->
+        <div id="commentLimitNotice" style="margin-top: 0.75rem;"></div>
     </form>
-  </div>
-  <div id="commentList" class="comment-list" style="margin-top: 20px;"></div>
-</section>
+    
+    <!-- Daftar Komentar -->
+    <div id="commentsList"></div>
+</div>
 
 <script>
-{% raw %}
-function getGravatarUrl(hash) {
-    if (!hash) return 'https://www.gravatar.com/avatar/?d=mp';
-    return `https://www.gravatar.com/avatar/${hash}?s=80&d=mp`;
-}
-function formatLocalDateTime(dateString) {
-    if (!dateString) return '';
-    const isoString = dateString.includes('Z') || dateString.includes('+') ? dateString : dateString.replace(' ', 'T') + 'Z';
-    const date = new Date(isoString);
-    return date.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-document.addEventListener('DOMContentLoaded', async () => {
-    const section = document.querySelector('.post-comments');
-    let slug = section ? section.getAttribute('data-slug') : '';
-    if (!slug || slug.includes('{{')) {
-        const segments = window.location.pathname.split('/').filter(Boolean);
-        slug = segments.length > 0 ? segments[segments.length - 1] : 'home';
-    }
-    if (slug) loadComments(slug);
-    const commentForm = document.getElementById('commentForm');
-    if (commentForm) {
-        commentForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            let currentSlug = section ? section.getAttribute('data-slug') : '';
-            if (!currentSlug || currentSlug.includes('{{')) {
-                const segments = window.location.pathname.split('/').filter(Boolean);
-                currentSlug = segments.length > 0 ? segments[segments.length - 1] : 'home';
-            }
-            const name = document.getElementById('commentName').value;
-            const email = document.getElementById('commentEmail').value;
-            const message = document.getElementById('commentMessage').value;
-            const parent_id = document.getElementById('replyParentId').value || null;
-            const subscribe = document.getElementById('newsletterCheckbox').checked;
-            const btn = document.getElementById('submitCommentBtn');
-            btn.disabled = true;
-            btn.innerText = 'Mengirim...';
-            try {
-                const res = await fetch('/api/comments', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ slug: currentSlug, name, email, message, parent_id, subscribe })
-                });
-                const data = await res.json();
-                if (!data.success) throw new Error(data.error || 'Gagal mengirim komentar');
-                commentForm.reset();
-                cancelReply();
-                loadComments(currentSlug);
-            } catch (err) {
-                alert('Terjadi kesalahan: ' + err.message);
-            }
-            btn.disabled = false;
-            btn.innerText = 'Kirim Komentar';
-        });
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const slug = window.currentSlug || window.location.pathname;
+    checkUserSession();
+    loadComments(slug);
 });
-async function loadComments(slug) {
-    const listEl = document.getElementById('commentList');
-    try {
-        const res = await fetch(`/api/comments?slug=${slug}`);
-        const comments = await res.json();
-        if (!comments || comments.length === 0) {
-            listEl.innerHTML = '<p style="color: #666; font-size: 14px;">Belum ada komentar. Jadilah yang pertama berkomentar!</p>';
-            return;
-        }
-        const parents = comments.filter(c => !c.parent_id);
-        const replies = comments.filter(c => c.parent_id);
-        let html = '';
-        for (const c of parents) html += renderCommentItem(c, replies);
-        listEl.innerHTML = html;
-    } catch (err) {
-        listEl.innerHTML = '<p style="color: red; font-size: 14px;">Gagal memuat komentar.</p>';
+
+function checkUserSession() {
+    const savedEmail = localStorage.getItem('user_comment_email');
+    const savedName = localStorage.getItem('user_comment_name');
+    
+    if (savedEmail) {
+        document.getElementById('commentEmail').value = savedEmail;
+        document.getElementById('emailInputWrapper').style.display = 'none';
+        document.getElementById('newsletterWrapper').style.display = 'none';
+        
+        const notice = document.getElementById('emailVerifiedNotice');
+        notice.style.display = 'block';
+        notice.innerHTML = `🔒 Komentar diamankan dengan email terverifikasi: <strong>${savedEmail}</strong>`;
+    }
+    
+    if (savedName) {
+        document.getElementById('commentName').value = savedName;
+    }
+
+    checkDailyLimit();
+}
+
+function checkDailyLimit() {
+    const today = new Date().toISOString().slice(0, 10);
+    const limitData = JSON.parse(localStorage.getItem('daily_comment_limit') || '{}');
+    
+    if (limitData.date === today && limitData.count >= 5) {
+        lockFormForLimit();
     }
 }
-function renderCommentItem(c, allReplies) {
-    const avatarUrl = getGravatarUrl(c.email_hash);
-    const childReplies = allReplies.filter(r => r.parent_id == c.id);
-    const formattedDate = formatLocalDateTime(c.created_at);
-    let repliesHtml = '';
-    for (const r of childReplies) {
-        const rAvatar = getGravatarUrl(r.email_hash);
-        const rFormattedDate = formatLocalDateTime(r.created_at);
-        repliesHtml += `
-            <div class="comment-item reply-item" style="margin-left: 30px; margin-top: 12px; border-left: 2px solid #e2e8f0; padding-left: 12px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <img src="${rAvatar}" alt="Avatar" width="32" height="32" style="border-radius: 50%;">
-                    <div><strong>${escapeHtml(r.name)}</strong><span style="font-size: 12px; color: #718096; margin-left: 6px;">${rFormattedDate}</span></div>
-                </div>
-                <p style="margin: 4px 0; font-size: 14px;">${escapeHtml(r.message)}</p>
-                <button onclick="likeComment(${r.id})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:13px; padding:0;">❤️ Suka (${r.likes || 0})</button>
+
+function lockFormForLimit() {
+    const btn = document.getElementById('submitCommentBtn');
+    const notice = document.getElementById('commentLimitNotice');
+    
+    if (btn) btn.disabled = true;
+    if (notice) {
+        notice.innerHTML = `
+            <div style="background: #fffaf0; border: 1px solid #feebc8; color: #c05621; padding: 10px 14px; border-radius: 6px; font-size: 0.85rem;">
+                ⚠️ Batas pengiriman komentar harian Anda (maksimal 5 kali) telah tercukupi untuk hari ini. Anda tetap dapat membaca semua komentar dan balasan yang ada.
             </div>`;
     }
-    return `
-        <div class="comment-item" style="margin-bottom: 16px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                <img src="${avatarUrl}" alt="Avatar" width="40" height="40" style="border-radius: 50%;">
-                <div><strong>${escapeHtml(c.name)}</strong><span style="font-size: 12px; color: #718096; margin-left: 6px;">${formattedDate}</span></div>
-            </div>
-            <p style="margin: 6px 0; font-size: 14px;">${escapeHtml(c.message)}</p>
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <button onclick="likeComment(${c.id})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:13px; padding:0;">❤️ Suka (${c.likes || 0})</button>
-                <button onclick='prepareReply(${c.id}, ${JSON.stringify(c.name)})' style="background:none; border:none; color:#0070f3; cursor:pointer; font-size:13px; padding:0;">Balas</button>
-            </div>
-            <div class="replies-container" style="margin-top: 10px;">${repliesHtml}</div>
-        </div>`;
 }
-function prepareReply(parentId, parentName) {
-    document.getElementById('replyParentId').value = parentId;
-    const indicator = document.getElementById('replyingIndicator');
-    indicator.style.display = 'block';
-    indicator.innerHTML = `Membalas <strong>${parentName}</strong> <button type="button" onclick="cancelReply()" style="background:none; border:none; color:red; cursor:pointer; padding:0; margin-left: 8px;">Batalkan</button>`;
-    document.getElementById('commentMessage').focus();
+
+async function loadComments(slug) {
+    const listContainer = document.getElementById('commentsList');
+    listContainer.innerHTML = '<p style="color: #666; font-size: 13px;">Memuat komentar...</p>';
+
+    try {
+        const response = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`);
+        const comments = await response.json();
+
+        if (comments.length === 0) {
+            listContainer.innerHTML = '<p style="color: #666; font-size: 13px;">Belum ada komentar. Jadilah yang pertama berkomentar!</p>';
+            return;
+        }
+
+        listContainer.innerHTML = comments.map(c => {
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random&color=fff&size=128&bold=true`;
+            
+            // Lencana terverifikasi resmi berbentuk perisai Google
+            const verifiedBadge = `
+                <span title="Email Terverifikasi" style="display: inline-flex; align-items: center; margin-left: 4px; color: #1a73e8;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                    </svg>
+                </span>
+            `;
+
+            // Pemisahan kelas untuk card balasan (reply) vs komentar utama
+            const cardClass = c.parent_id ? 'comment-card is-reply' : 'comment-card';
+
+            return `
+                <div class="${cardClass}">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <img src="${avatarUrl}" alt="Avatar">
+                        <div>
+                            <div style="display: flex; align-items: center; font-weight: bold; font-size: 14px; color: #333;">
+                                ${escapeHtml(c.name)} ${verifiedBadge}
+                            </div>
+                            <div style="font-size: 11px; color: #777;">${formatLocalDateTime(c.created_at)}</div>
+                        </div>
+                    </div>
+                    <p>${escapeHtml(c.message)}</p>
+                    <div style="display: flex; gap: 15px; font-size: 12px;">
+                        <button onclick="likeComment(${c.id})">❤️ Suka (${c.likes || 0})</button>
+                        <button onclick="prepareReply(${c.id}, '${escapeHtml(c.name)}')">Balas</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        listContainer.innerHTML = '<p style="color: red; font-size: 13px;">Gagal memuat komentar.</p>';
+    }
 }
-function cancelReply() {
-    document.getElementById('replyParentId').value = '';
-    document.getElementById('replyingIndicator').style.display = 'none';
-}
+
+document.getElementById('commentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const today = new Date().toISOString().slice(0, 10);
+    let limitData = JSON.parse(localStorage.getItem('daily_comment_limit') || '{}');
+    if (limitData.date !== today) {
+        limitData = { date: today, count: 0 };
+    }
+    if (limitData.count >= 5) {
+        alert('Batas pengiriman komentar harian Anda sudah tercukupi.');
+        lockFormForLimit();
+        return;
+    }
+
+    const email = document.getElementById('commentEmail').value.trim();
+    const name = document.getElementById('commentName').value.trim();
+    const message = document.getElementById('commentMessage').value.trim();
+    const subscribe = document.getElementById('newsletterCheckbox') ? document.getElementById('newsletterCheckbox').checked : false;
+    const parent_id = document.getElementById('replyParentId').value || null;
+    const slug = window.currentSlug || window.location.pathname;
+
+    try {
+        const response = await fetch('/api/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug, email, name, message, parent_id, subscribe })
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            localStorage.setItem('user_comment_email', email);
+            localStorage.setItem('user_comment_name', name);
+
+            limitData.count += 1;
+            localStorage.setItem('daily_comment_limit', JSON.stringify(limitData));
+
+            document.getElementById('commentMessage').value = '';
+            document.getElementById('replyParentId').value = '';
+            
+            loadComments(slug);
+            checkUserSession();
+        } else {
+            alert('Gagal: ' + (result.error || 'Terjadi kesalahan'));
+        }
+    } catch (err) {
+        alert('Terjadi kesalahan jaringan.');
+    }
+});
+
 async function likeComment(id) {
     try {
-        const res = await fetch('/api/comments', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-        const data = await res.json();
-        if (data.success) {
-            let slug = document.querySelector('.post-comments').getAttribute('data-slug');
-            if (!slug || slug.includes('{{')) { const segments = window.location.pathname.split('/').filter(Boolean); slug = segments.length > 0 ? segments[segments.length - 1] : 'home'; }
-            loadComments(slug);
+        const response = await fetch('/api/comments', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        const result = await response.json();
+        if (result.success) {
+            loadComments(window.currentSlug || window.location.pathname);
         }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+        console.error('Gagal menyukai');
+    }
 }
+
+function prepareReply(parentId, authorName) {
+    document.getElementById('replyParentId').value = parentId;
+    const textarea = document.getElementById('commentMessage');
+    textarea.placeholder = `Membalas @${authorName}...`;
+    textarea.focus();
+}
+
 function escapeHtml(text) {
     if (!text) return '';
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.toString().replace(/[&<>"']/g, m => map[m]);
 }
-{% endraw %}
-  </script>
+
+function formatLocalDateTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString + ' UTC');
+    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+</script>

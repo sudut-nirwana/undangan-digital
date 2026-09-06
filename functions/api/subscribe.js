@@ -1,11 +1,18 @@
 export async function onRequestPost(context) {
     try {
         const { email } = await context.request.json();
-        if (!email || !email.includes('@')) {
-            return new Response(JSON.stringify({ success: false, error: 'Email tidak valid' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        
+        if (!email) {
+            return new Response(JSON.stringify({ success: false, error: 'Email wajib diisi' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }
 
         const cleanEmail = email.trim().toLowerCase();
+        
+        // Validasi format email standar yang konsisten
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(cleanEmail)) {
+            return new Response(JSON.stringify({ success: false, error: 'Format email tidak valid' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
 
         await context.env.DB.prepare(
             "INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, datetime('now'))"

@@ -184,10 +184,10 @@ async function loadAdminData() {
                 <tr>
                     <td>${escapeHtml(c.article_slug)}</td>
                     <td>
-                        <strong>${escapeHtml(c.name || 'Anonim')}</strong><br>
+                        <strong>${escapeHtml(c.author_name || 'Anonim')}</strong><br>
                         <small style="color:#718096;">❤️ ${c.likes || 0} Suka • ${escapeHtml(c.created_at || '')}</small>
                     </td>
-                    <td>${escapeHtml(c.message)}</td>
+                    <td>${escapeHtml(c.content || '')}</td>
                     <td><button type="button" class="btn-danger" onclick="deleteComment(${c.id})">Hapus</button></td>
                 </tr>
             `).join('');

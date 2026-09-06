@@ -1,13 +1,11 @@
 <div class="comments-section">
     <h3>Komentar</h3>
     
-    <!-- Form Komentar -->
     <form id="commentForm">
         <div id="emailInputWrapper" class="form-group">
             <input type="email" id="commentEmail" placeholder="Email Anda (Nama & centang biru otomatis)" required>
         </div>
         
-        <!-- Notifikasi Email Terverifikasi -->
         <div id="emailVerifiedNotice" class="verified-notice" style="display: none;"></div>
 
         <div class="form-group">
@@ -23,11 +21,9 @@
         <input type="hidden" id="replyParentId" value="">
         <button type="submit" id="submitCommentBtn">Kirim Komentar</button>
         
-        <!-- Peringatan Batas Harian -->
         <div id="commentLimitNotice"></div>
     </form>
     
-    <!-- Daftar Komentar -->
     <div id="commentsList"></div>
 </div>
 
@@ -70,7 +66,7 @@ function lockFormForLimit() {
     if (btn) btn.disabled = true;
     if (notice) {
         notice.innerHTML = `
-            <div style="background: #fffaf0; border: 1px solid #feebc8; color: #c05621; padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; margin-top: 0.75rem;">
+            <div style="background: var(--color-section, #DED6CA); border: 1px solid var(--color-border, #c7c0ba); color: var(--text-main, #3E3E3B); padding: 10px 14px; border-radius: var(--radius-sm, 8px); font-size: 0.85rem; margin-top: 0.75rem;">
                 ⚠️ Batas pengiriman komentar harian Anda (maksimal 5 kali) telah tercukupi untuk hari ini. Anda tetap dapat membaca semua komentar dan balasan yang ada.
             </div>`;
     }
@@ -78,14 +74,14 @@ function lockFormForLimit() {
 
 async function loadComments(slug) {
     const listContainer = document.getElementById('commentsList');
-    listContainer.innerHTML = '<p style="color: #666; font-size: 13px;">Memuat komentar...</p>';
+    listContainer.innerHTML = '<p style="color: var(--text-muted, #585752); font-size: 13px;">Memuat komentar...</p>';
 
     try {
         const response = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`);
         const comments = await response.json();
 
         if (comments.length === 0) {
-            listContainer.innerHTML = '<p style="color: #666; font-size: 13px;">Belum ada komentar. Jadilah yang pertama berkomentar!</p>';
+            listContainer.innerHTML = '<p style="color: var(--text-muted, #585752); font-size: 13px;">Belum ada komentar. Jadilah yang pertama berkomentar!</p>';
             return;
         }
 
@@ -95,28 +91,37 @@ async function loadComments(slug) {
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random&color=fff&size=128&bold=true`;
             
             const verifiedBadge = `
-                <span title="Email Terverifikasi" style="display: inline-flex; align-items: center; margin-left: 4px; color: #1a73e8;">
+                <span title="Email Terverifikasi" style="display: inline-flex; align-items: center; margin-left: 4px; color: var(--green-primary, #5D6530);">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
                         <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
                     </svg>
                 </span>
             `;
 
+            let replyIndicator = '';
+            if (c.parent_id) {
+                const parentComment = comments.find(item => item.id === c.parent_id);
+                if (parentComment) {
+                    replyIndicator = `<div style="font-size: 0.85rem; color: var(--text-muted, #585752); margin-bottom: 0.5rem; font-style: italic;">Membalas ke <strong>@${escapeHtml(parentComment.name)}</strong></div>`;
+                }
+            }
+
             const cardClass = c.parent_id ? 'comment-card is-reply' : 'comment-card';
             const isLiked = likedComments.includes(c.id);
-            const likeBtnStyle = isLiked ? 'color: #e0245e; font-weight: bold; cursor: default;' : 'color: #e0245e; cursor: pointer;';
+            const likeBtnStyle = isLiked ? 'color: var(--color-primary, #896340); font-weight: bold; cursor: default;' : 'color: var(--text-muted, #585752); cursor: pointer;';
 
             return `
                 <div class="${cardClass}">
                     <div class="comment-header">
                         <img src="${avatarUrl}" alt="Avatar">
                         <div>
-                            <div style="display: flex; align-items: center; font-weight: bold; font-size: 14px; color: #333;">
+                            <div style="display: flex; align-items: center; font-weight: bold; font-size: 14px; color: var(--text-main, #3E3E3B);">
                                 ${escapeHtml(c.name)} ${verifiedBadge}
                             </div>
-                            <div style="font-size: 11px; color: #777;">${formatLocalDateTime(c.created_at)}</div>
+                            <div style="font-size: 11px; color: var(--text-muted, #585752);">${formatLocalDateTime(c.created_at)}</div>
                         </div>
                     </div>
+                    ${replyIndicator}
                     <p>${escapeHtml(c.message)}</p>
                     <div style="display: flex; gap: 15px; font-size: 12px;">
                         <button onclick="likeComment(${c.id})" style="${likeBtnStyle}">❤️ Suka (${c.likes || 0})</button>
@@ -126,7 +131,7 @@ async function loadComments(slug) {
             `;
         }).join('');
     } catch (err) {
-        listContainer.innerHTML = '<p style="color: red; font-size: 13px;">Gagal memuat komentar.</p>';
+        listContainer.innerHTML = '<p style="color: #e53e3e; font-size: 13px;">Gagal memuat komentar.</p>';
     }
 }
 
@@ -180,7 +185,7 @@ document.getElementById('commentForm').addEventListener('submit', async function
 async function likeComment(id) {
     const likedComments = JSON.parse(localStorage.getItem('liked_comments') || '[]');
     if (likedComments.includes(id)) {
-        return; // Mencegah spam klik like berulang kali
+        return;
     }
 
     try {
@@ -218,4 +223,4 @@ function formatLocalDateTime(dateString) {
     const date = new Date(dateString + ' UTC');
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
-      </script>
+</script>

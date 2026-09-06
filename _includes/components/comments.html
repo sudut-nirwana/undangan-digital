@@ -1,32 +1,22 @@
 <section class="post-comments" data-slug="{{ page.slug }}">
   <h3 class="comments-title">Komentar</h3>
-
   <div id="formWrapper">
     <form id="commentForm" class="comment-form">
       <input type="hidden" id="replyParentId" value="">
-      <div class="form-group">
-        <input type="text" id="commentName" placeholder="Masukan Nama Anda" required>
-      </div>
-      <div class="form-group">
-        <input type="email" id="commentEmail" placeholder="contoh@gmail.com" required>
-      </div>
-      <div class="form-group">
-        <textarea id="commentMessage" rows="3" placeholder="Tulis komentar Anda..." required></textarea>
-      </div>
-      
+      <div class="form-group"><input type="text" id="commentName" placeholder="Masukan Nama Anda" required></div>
+      <div class="form-group"><input type="email" id="commentEmail" placeholder="contoh@gmail.com" required></div>
+      <div class="form-group"><textarea id="commentMessage" rows="3" placeholder="Tulis komentar Anda..." required></textarea></div>
       <div class="form-group-checkbox" style="margin-bottom: 12px; font-size: 14px;">
         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
           <input type="checkbox" id="newsletterCheckbox" checked> Kirimkan juga update artikel terbaru via email ini
         </label>
       </div>
-
       <div id="replyingIndicator" style="font-size: 13px; color: #0070f3; margin-bottom: 8px; display: none;">
         Membalas komentar... <button type="button" onclick="cancelReply()" style="background:none; border:none; color:red; cursor:pointer; padding:0;">Batalkan</button>
       </div>
       <button type="submit" class="btn-submit" id="submitCommentBtn">Kirim Komentar</button>
     </form>
   </div>
-
   <div id="commentList" class="comment-list" style="margin-top: 20px;"></div>
 </section>
 
@@ -34,76 +24,47 @@
 {% raw %}
 function getGravatarUrl(hash) {
     if (!hash) return 'https://www.gravatar.com/avatar/?d=mp';
-    return `https://www.gravatar.com/avatar/${hash}?s=80&d=identicon`;
+    return `https://www.gravatar.com/avatar/${hash}?s=80&d=mp`;
 }
-
 function formatLocalDateTime(dateString) {
     if (!dateString) return '';
     const isoString = dateString.includes('Z') || dateString.includes('+') ? dateString : dateString.replace(' ', 'T') + 'Z';
     const date = new Date(isoString);
-    return date.toLocaleString('id-ID', {
-        timeZone: 'Asia/Jakarta',
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    return date.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
-
 document.addEventListener('DOMContentLoaded', async () => {
     const section = document.querySelector('.post-comments');
     let slug = section ? section.getAttribute('data-slug') : '';
-    
     if (!slug || slug.includes('{{')) {
         const segments = window.location.pathname.split('/').filter(Boolean);
         slug = segments.length > 0 ? segments[segments.length - 1] : 'home';
     }
-    
     if (slug) loadComments(slug);
-
     const commentForm = document.getElementById('commentForm');
     if (commentForm) {
         commentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            // Re-evaluasi slug saat tombol kirim ditekan agar tidak kosong
             let currentSlug = section ? section.getAttribute('data-slug') : '';
             if (!currentSlug || currentSlug.includes('{{')) {
                 const segments = window.location.pathname.split('/').filter(Boolean);
                 currentSlug = segments.length > 0 ? segments[segments.length - 1] : 'home';
             }
-
             const name = document.getElementById('commentName').value;
             const email = document.getElementById('commentEmail').value;
             const message = document.getElementById('commentMessage').value;
             const parent_id = document.getElementById('replyParentId').value || null;
             const subscribe = document.getElementById('newsletterCheckbox').checked;
-
             const btn = document.getElementById('submitCommentBtn');
             btn.disabled = true;
             btn.innerText = 'Mengirim...';
-
             try {
                 const res = await fetch('/api/comments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ slug: currentSlug, name, email, message, parent_id })
+                    body: JSON.stringify({ slug: currentSlug, name, email, message, parent_id, subscribe })
                 });
                 const data = await res.json();
-                
-                if (!data.success) {
-                    throw new Error(data.error || 'Gagal mengirim komentar');
-                }
-
-                if (subscribe) {
-                    await fetch('/api/subscribe', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                    }).catch(() => {});
-                }
-
+                if (!data.success) throw new Error(data.error || 'Gagal mengirim komentar');
                 commentForm.reset();
                 cancelReply();
                 loadComments(currentSlug);
@@ -115,36 +76,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
-
 async function loadComments(slug) {
     const listEl = document.getElementById('commentList');
     try {
         const res = await fetch(`/api/comments?slug=${slug}`);
         const comments = await res.json();
-        
         if (!comments || comments.length === 0) {
             listEl.innerHTML = '<p style="color: #666; font-size: 14px;">Belum ada komentar. Jadilah yang pertama berkomentar!</p>';
             return;
         }
-
         const parents = comments.filter(c => !c.parent_id);
         const replies = comments.filter(c => c.parent_id);
-
         let html = '';
-        for (const c of parents) {
-            html += renderCommentItem(c, replies);
-        }
+        for (const c of parents) html += renderCommentItem(c, replies);
         listEl.innerHTML = html;
     } catch (err) {
         listEl.innerHTML = '<p style="color: red; font-size: 14px;">Gagal memuat komentar.</p>';
     }
 }
-
 function renderCommentItem(c, allReplies) {
     const avatarUrl = getGravatarUrl(c.email_hash);
     const childReplies = allReplies.filter(r => r.parent_id == c.id);
     const formattedDate = formatLocalDateTime(c.created_at);
-
     let repliesHtml = '';
     for (const r of childReplies) {
         const rAvatar = getGravatarUrl(r.email_hash);
@@ -153,38 +106,26 @@ function renderCommentItem(c, allReplies) {
             <div class="comment-item reply-item" style="margin-left: 30px; margin-top: 12px; border-left: 2px solid #e2e8f0; padding-left: 12px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                     <img src="${rAvatar}" alt="Avatar" width="32" height="32" style="border-radius: 50%;">
-                    <div>
-                        <strong>${escapeHtml(r.name)}</strong>
-                        <span style="font-size: 12px; color: #718096; margin-left: 6px;">${rFormattedDate}</span>
-                    </div>
+                    <div><strong>${escapeHtml(r.name)}</strong><span style="font-size: 12px; color: #718096; margin-left: 6px;">${rFormattedDate}</span></div>
                 </div>
                 <p style="margin: 4px 0; font-size: 14px;">${escapeHtml(r.message)}</p>
                 <button onclick="likeComment(${r.id})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:13px; padding:0;">❤️ Suka (${r.likes || 0})</button>
-            </div>
-        `;
+            </div>`;
     }
-
     return `
         <div class="comment-item" style="margin-bottom: 16px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                 <img src="${avatarUrl}" alt="Avatar" width="40" height="40" style="border-radius: 50%;">
-                <div>
-                    <strong>${escapeHtml(c.name)}</strong>
-                    <span style="font-size: 12px; color: #718096; margin-left: 6px;">${formattedDate}</span>
-                </div>
+                <div><strong>${escapeHtml(c.name)}</strong><span style="font-size: 12px; color: #718096; margin-left: 6px;">${formattedDate}</span></div>
             </div>
             <p style="margin: 6px 0; font-size: 14px;">${escapeHtml(c.message)}</p>
             <div style="display: flex; gap: 12px; align-items: center;">
                 <button onclick="likeComment(${c.id})" style="background:none; border:none; color:#e53e3e; cursor:pointer; font-size:13px; padding:0;">❤️ Suka (${c.likes || 0})</button>
-                <button onclick="prepareReply(${c.id}, '${escapeHtml(c.name)}')" style="background:none; border:none; color:#0070f3; cursor:pointer; font-size:13px; padding:0;">Balas</button>
+                <button onclick='prepareReply(${c.id}, ${JSON.stringify(c.name)})' style="background:none; border:none; color:#0070f3; cursor:pointer; font-size:13px; padding:0;">Balas</button>
             </div>
-            <div class="replies-container" style="margin-top: 10px;">
-                ${repliesHtml}
-            </div>
-        </div>
-    `;
+            <div class="replies-container" style="margin-top: 10px;">${repliesHtml}</div>
+        </div>`;
 }
-
 function prepareReply(parentId, parentName) {
     document.getElementById('replyParentId').value = parentId;
     const indicator = document.getElementById('replyingIndicator');
@@ -192,36 +133,24 @@ function prepareReply(parentId, parentName) {
     indicator.innerHTML = `Membalas <strong>${parentName}</strong> <button type="button" onclick="cancelReply()" style="background:none; border:none; color:red; cursor:pointer; padding:0; margin-left: 8px;">Batalkan</button>`;
     document.getElementById('commentMessage').focus();
 }
-
 function cancelReply() {
     document.getElementById('replyParentId').value = '';
     document.getElementById('replyingIndicator').style.display = 'none';
 }
-
 async function likeComment(id) {
     try {
-        const res = await fetch('/api/comments', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id })
-        });
+        const res = await fetch('/api/comments', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
         const data = await res.json();
         if (data.success) {
             let slug = document.querySelector('.post-comments').getAttribute('data-slug');
-            if (!slug || slug.includes('{{')) {
-                const segments = window.location.pathname.split('/').filter(Boolean);
-                slug = segments.length > 0 ? segments[segments.length - 1] : 'home';
-            }
+            if (!slug || slug.includes('{{')) { const segments = window.location.pathname.split('/').filter(Boolean); slug = segments.length > 0 ? segments[segments.length - 1] : 'home'; }
             loadComments(slug);
         }
-    } catch (err) {
-        console.error(err);
-    }
+    } catch (err) { console.error(err); }
 }
-
 function escapeHtml(text) {
     if (!text) return '';
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 {% endraw %}
-      </script>
+  </script>

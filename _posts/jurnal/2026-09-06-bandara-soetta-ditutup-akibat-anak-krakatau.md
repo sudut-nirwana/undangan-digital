@@ -11,9 +11,11 @@ slug: "bandara-soetta-ditutup-akibat-anak-krakatau"
 popular: "true"
 ---
 
-# Siaga Erupsi Anak Krakatau: Bahaya Abu Vulkanik dan Panduan Keselamatan untuk Anda
+## Siaga Erupsi Anak Krakatau: Bahaya Abu Vulkanik dan Panduan Keselamatan untuk Anda
 
 > **Kondisi Terkini (6 September 2026):** Gunung Anak Krakatau saat ini berada pada **Status Level III (Siaga)** setelah mengalami erupsi beruntun. Sebaran abu vulkanik berisiko tinggi telah meluas hingga ke wilayah Banten, Lampung, Jawa Barat, dan DKI Jakarta. Akibatnya, otoritas penerbangan terpaksa **menutup sementara operasional Bandara Internasional Soekarno-Hatta (Soetta)** serta beberapa bandara sekitarnya demi keselamatan penerbangan.
+
+{% include alert-single.html category="lifestyle" %}
 
 Erupsi gunung berapi tidak hanya berdampak pada pembatalan transportasi udara, tetapi juga membawa ancaman nyata bagi kesehatan kita yang berada di darat melalui paparan **abu vulkanik**. 
 
@@ -46,6 +48,8 @@ Di tengah paparan abu vulkanik, masker menjadi pelindung utama saluran pernapasa
 ---
 
 ## 3. Aturan Beraktivitas di Luar Ruangan saat Hujan Abu
+
+{% include alert-group.html category="seni & budaya" %}
 
 Selama indeks kualitas udara memburuk akibat sebaran abu Anak Krakatau, batasi pergerakan Anda di luar rumah demi menjaga kesehatan.
 

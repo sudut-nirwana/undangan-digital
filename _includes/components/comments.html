@@ -31,6 +31,7 @@
 </section>
 
 <script>
+{% raw %}
 function getGravatarUrl(hash) {
     if (!hash) return 'https://www.gravatar.com/avatar/?d=mp';
     return `https://www.gravatar.com/avatar/${hash}?s=80&d=identicon`;
@@ -62,7 +63,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.innerText = 'Mengirim...';
 
             try {
-                // 1. Kirim data utama ke API Comments
                 const res = await fetch('/api/comments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -74,13 +74,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error(data.error || 'Gagal mengirim komentar');
                 }
 
-                // 2. Jika checkbox newsletter dicentang, kirim otomatis ke API Subscribe
                 if (subscribe) {
                     await fetch('/api/subscribe', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email })
-                    }).catch(() => {}); // Gagal senyap agar proses komentar utama tidak terganggu
+                    }).catch(() => {});
                 }
 
                 commentForm.reset();
@@ -200,4 +199,5 @@ function escapeHtml(text) {
     if (!text) return '';
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
+{% endraw %}
 </script>

@@ -2,10 +2,10 @@
 layout: content
 title: "Bandara Soetta Ditutup Akibat Anak Krakatau: Ini Dampak Abu Vulkanik dan Cara Lindungi Diri"
 author: "Yossi Oktavia"
-date: 2026-09-06 04:36:11 +0700
+date: 2026-09-06 00:00:00 +0700
 categories: [jurnal]
 tags: ["anak krakatau", "erupsi krakatau", "abu vulkanik", "dampak abu vulkanik", "bandara soekarno hatta", "masker n95", "kesehatan pernapasan", "mitigasi bencana", "edukasi kesehatan"]
-image: /assets/images/post/polusi-udara-eropsi-anak-krakatau
+image: /assets/images/post/polusi-udara.webp
 description: "Erupsi Anak Krakatau memicu hujan abu hingga menunda penerbangan di Bandara Soekarno-Hatta. Simak panduan edukasi mengenai dampak buruk abu vulkanik bagi kesehatan, tips memilih jenis masker yang tepat, serta aturan aman beraktivitas di luar ruangan."
 slug: "bandara-soetta-ditutup-akibat-anak-krakatau"
 popular: "true"

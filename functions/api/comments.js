@@ -18,7 +18,14 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
     try {
-        const { slug, name, email, message, parent_id } = await context.request.json();
+        const body = await context.request.json();
+        let { slug, name, email, message, parent_id } = body;
+
+        // Fallback pengaman jika slug masih membawa tag unrendered atau kosong
+        if (!slug || slug.includes('{{')) {
+            slug = 'home';
+        }
+
         if (!slug || !name || !email || !message) {
             return new Response(JSON.stringify({ success: false, error: 'Data tidak lengkap' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
         }

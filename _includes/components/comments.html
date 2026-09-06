@@ -3,18 +3,18 @@
     
     <!-- Form Komentar -->
     <form id="commentForm">
-        <div id="emailInputWrapper" style="margin-bottom: 1rem;">
+        <div id="emailInputWrapper" class="form-group">
             <input type="email" id="commentEmail" placeholder="Email Anda (Nama & centang biru otomatis)" required>
         </div>
         
         <!-- Notifikasi Email Terverifikasi -->
-        <div id="emailVerifiedNotice" style="margin-bottom: 1rem; font-size: 0.875rem; color: #1a73e8; display: none; font-weight: 500;"></div>
+        <div id="emailVerifiedNotice" class="verified-notice" style="display: none;"></div>
 
-        <div style="margin-bottom: 1rem;">
+        <div class="form-group">
             <textarea id="commentMessage" placeholder="Tulis komentar Anda di sini..." rows="4" required></textarea>
         </div>
 
-        <div style="margin-bottom: 1rem;" id="newsletterWrapper">
+        <div class="form-group" id="newsletterWrapper">
             <label>
                 <input type="checkbox" id="newsletterCheckbox"> Berlangganan update artikel terbaru via email ini
             </label>
@@ -24,7 +24,7 @@
         <button type="submit" id="submitCommentBtn">Kirim Komentar</button>
         
         <!-- Peringatan Batas Harian -->
-        <div id="commentLimitNotice" style="margin-top: 0.75rem;"></div>
+        <div id="commentLimitNotice"></div>
     </form>
     
     <!-- Daftar Komentar -->
@@ -70,7 +70,7 @@ function lockFormForLimit() {
     if (btn) btn.disabled = true;
     if (notice) {
         notice.innerHTML = `
-            <div style="background: #fffaf0; border: 1px solid #feebc8; color: #c05621; padding: 10px 14px; border-radius: 6px; font-size: 0.85rem;">
+            <div style="background: #fffaf0; border: 1px solid #feebc8; color: #c05621; padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; margin-top: 0.75rem;">
                 ⚠️ Batas pengiriman komentar harian Anda (maksimal 5 kali) telah tercukupi untuk hari ini. Anda tetap dapat membaca semua komentar dan balasan yang ada.
             </div>`;
     }
@@ -89,6 +89,8 @@ async function loadComments(slug) {
             return;
         }
 
+        const likedComments = JSON.parse(localStorage.getItem('liked_comments') || '[]');
+
         listContainer.innerHTML = comments.map(c => {
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=random&color=fff&size=128&bold=true`;
             
@@ -101,10 +103,12 @@ async function loadComments(slug) {
             `;
 
             const cardClass = c.parent_id ? 'comment-card is-reply' : 'comment-card';
+            const isLiked = likedComments.includes(c.id);
+            const likeBtnStyle = isLiked ? 'color: #e0245e; font-weight: bold; cursor: default;' : 'color: #e0245e; cursor: pointer;';
 
             return `
                 <div class="${cardClass}">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                    <div class="comment-header">
                         <img src="${avatarUrl}" alt="Avatar">
                         <div>
                             <div style="display: flex; align-items: center; font-weight: bold; font-size: 14px; color: #333;">
@@ -115,7 +119,7 @@ async function loadComments(slug) {
                     </div>
                     <p>${escapeHtml(c.message)}</p>
                     <div style="display: flex; gap: 15px; font-size: 12px;">
-                        <button onclick="likeComment(${c.id})">❤️ Suka (${c.likes || 0})</button>
+                        <button onclick="likeComment(${c.id})" style="${likeBtnStyle}">❤️ Suka (${c.likes || 0})</button>
                         <button onclick="prepareReply(${c.id}, '${escapeHtml(c.name)}')">Balas</button>
                     </div>
                 </div>
@@ -174,6 +178,11 @@ document.getElementById('commentForm').addEventListener('submit', async function
 });
 
 async function likeComment(id) {
+    const likedComments = JSON.parse(localStorage.getItem('liked_comments') || '[]');
+    if (likedComments.includes(id)) {
+        return; // Mencegah spam klik like berulang kali
+    }
+
     try {
         const response = await fetch('/api/comments', {
             method: 'PATCH',
@@ -182,6 +191,8 @@ async function likeComment(id) {
         });
         const result = await response.json();
         if (result.success) {
+            likedComments.push(id);
+            localStorage.setItem('liked_comments', JSON.stringify(likedComments));
             loadComments(window.currentSlug || window.location.pathname);
         }
     } catch (err) {

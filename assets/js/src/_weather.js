@@ -20,7 +20,6 @@
   const uvEl = document.getElementById('weatherUV');
   const aqiEl = document.getElementById('weatherAQI');
   const forecastGrid = document.getElementById('forecastGrid');
-  const headerTemp = document.querySelector('.weather-temp');
   const timeBadgeIcon = document.getElementById('timeBadgeIcon');
   const timeBadgeText = document.getElementById('timeBadgeText');
   const citySelect = document.getElementById('citySelect');
@@ -84,10 +83,10 @@
   }
 
   function fetchWeatherData(lat, lon, cityName) {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,is_day,weather_code,wind_speed_10m,uv_index&hourly=temperature_2m,weather_code&timezone=auto`;
+    const url = `/api/cuaca?lat=${lat}&lon=${lon}`;
     fetch(url)
-     .then(res => res.json())
-     .then(data => {
+    .then(res => res.json())
+    .then(data => {
         const cur = data.current;
         if (!cur) return;
         currentTempC = Math.round(cur.temperature_2m);
@@ -106,7 +105,7 @@
         updateTemperatureDisplay();
         renderForecast(data.hourly);
       })
-     .catch(err => console.error('Weather Fetch Error:', err));
+    .catch(err => console.error('Weather Fetch Error:', err));
   }
 
   function applyDynamicTheme(baseTheme, override) {
@@ -141,13 +140,13 @@
   }
 
   function fetchCityByReverseGeocoding(lat, lon) {
-    fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`)
-     .then(res => res.json())
-     .then(data => {
+    fetch(`/api/reverse?lat=${lat}&lon=${lon}`)
+    .then(res => res.json())
+    .then(data => {
         const detectedCity = data.city || data.locality || data.principalSubdivision || 'Lokasi Presisi';
         fetchWeatherData(lat, lon, detectedCity);
       })
-     .catch(() => fetchWeatherData(lat, lon, 'Lokasi Presisi'));
+    .catch(() => fetchWeatherData(lat, lon, 'Lokasi Presisi'));
   }
 
   function cToF(c) { return Math.round((c * 9/5) + 32); }
@@ -156,7 +155,6 @@
     const val = isCelsius? `${currentTempC}°C` : `${cToF(currentTempC)}°F`;
     if (mainTempEl) mainTempEl.textContent = val;
     if (subTempEl) subTempEl.textContent = val;
-    if (headerTemp) headerTemp.textContent = val;
     if (lastHourlyData) renderForecast(lastHourlyData);
   }
 

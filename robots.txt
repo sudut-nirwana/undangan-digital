@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /schema.sql
+
+Sitemap: https://sudutnirwana.com/sitemap.xml

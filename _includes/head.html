@@ -5,6 +5,9 @@
   <!-- meta seo tag -->
   {% seo %}
 
+  <!-- Preload LCP -->
+  <link rel="preload" as="image" href="/assets/images/hero-banner.webp" fetchpriority="high">
+  
   <!-- Stylesheet -->
   <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
 </head>

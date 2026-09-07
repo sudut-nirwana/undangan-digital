@@ -1,14 +1,20 @@
 .hero-section {
   position: relative;
-  background-image: url("/assets/images/hero-banner.webp");
-  background-size: cover;
-  background-position: right center;
-  background-repeat: no-repeat;
   padding: 40px 0 70px;
   min-height: 520px;
   display: flex;
   align-items: center;
   overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+  z-index: 0;
 }
 
 .hero-overlay {
@@ -88,29 +94,29 @@
   text-decoration: none;
   transition: all 0.2s ease;
   cursor: pointer;
+}
 
-  &.primary {
-    background-color: var(--color-accent);
-    color: var(--color-card);
+.hero-btn.primary {
+  background-color: var(--color-primary);
+  color: var(--color-card);
+}
 
-    &:hover {
-      background-color: var(--color-primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-sm);
-    }
-  }
+.hero-btn.primary:hover {
+  background-color: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
 
-  &.secondary {
-    background-color: var(--color-card);
-    color: var(--text-main);
-    border: 1px solid var(--color-border);
+.hero-btn.secondary {
+  background-color: var(--color-card);
+  color: var(--text-main);
+  border: 1px solid var(--color-border);
+}
 
-    &:hover {
-      background-color: var(--color-section);
-      border-color: var(--color-primary);
-      transform: translateY(-2px);
-    }
-  }
+.hero-btn.secondary:hover {
+  background-color: var(--color-section);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 @media (min-width: 768px) {
@@ -123,7 +129,10 @@
   .hero-section {
     min-height: auto;
     padding: 24px 0 48px;
-    background-position: 25% center;
+  }
+
+  .hero-bg {
+    object-position: 25% center;
   }
 
   .hero-overlay {
@@ -138,16 +147,12 @@
     font-size: 26px;
   }
 
-  .hero-subtitle {
-    
-  }
-
   .hero-actions {
     flex-direction: column;
     align-items: stretch;
+  }
 
-    .hero-btn {
-      width: 100%;
-    }
+  .hero-actions .hero-btn {
+    width: 100%;
   }
 }

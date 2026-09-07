@@ -49,8 +49,8 @@
   height: 34px;
   border: none;
   border-radius: var(--radius-full);
-  background: var(--color-accent);
-  color: var(--color-card);
+  background: var(--color-primary);
+  color: #ffffff;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -58,7 +58,7 @@
 }
 
 .search-submit-btn:hover{
-  background: var(--color-primary);
+  background: var(--color-accent);
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }

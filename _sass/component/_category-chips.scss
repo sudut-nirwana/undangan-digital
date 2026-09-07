@@ -37,9 +37,9 @@
 
     &:hover,
     &.active {
-      background-color: var(--color-accent);
+      background-color: var(--color-primary);
       color: #FFFFFF;
-      border-color: var(--color-primary);
+      border-color: var(--color-accent);
     }
   }
 }

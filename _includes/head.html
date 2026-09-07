@@ -6,7 +6,7 @@
   {% seo %}
 
   <!-- Preload LCP -->
-  <link rel="preload" as="image" href="/assets/images/hero-banner.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="{{ '/assets/images/hero-banner.webp' | relative_url }}" fetchpriority="high">
   
   <!-- Stylesheet -->
   <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">

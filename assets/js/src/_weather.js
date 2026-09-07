@@ -27,6 +27,7 @@
   const gpsModal = document.getElementById('gpsModal');
   const gpsConfirmBtn = document.getElementById('gpsConfirmBtn');
   const gpsCancelBtn = document.getElementById('gpsCancelBtn');
+  const headerTempEl = document.querySelector('.weather-temp');
 
   let currentTempC = 28;
   let isCelsius = true;
@@ -155,6 +156,7 @@
     const val = isCelsius? `${currentTempC}°C` : `${cToF(currentTempC)}°F`;
     if (mainTempEl) mainTempEl.textContent = val;
     if (subTempEl) subTempEl.textContent = val;
+    if (headerTempEl) headerTempEl.textContent = val;
     if (lastHourlyData) renderForecast(lastHourlyData);
   }
 

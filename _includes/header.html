@@ -1,27 +1,22 @@
 <header class="site-header">
   <div class="container header-container">
     
-    <!-- Brand Logo -->
     <a href="{{ '/' | relative_url }}" class="header-brand">
       <span class="brand-title">Sudut<span>Nirwana</span></span>
       <span class="brand-tagline">Lensa Berita & Lifestyle</span>
     </a>
 
-    <!-- Independent Search Component -->
     <div class="header-search">
       {% include components/search-input.html %}
     </div>
 
-    <!-- Actions & Weather Wrapper -->
     <div class="header-actions">
-      <!-- Weather Trigger Button -->
       <div class="weather-wrapper">
         <button type="button" class="weather-trigger" id="weatherTrigger" aria-label="Informasi Cuaca">
           <span data-icon="cloud-sun" class="weather-icon"></span>
           <span class="weather-temp">--°C</span>
         </button>
 
-        <!-- Weather Card Container -->
         <div class="weather-card" id="weatherCard">
           <div class="weather-card-header">
             <h4>Prakiraan Cuaca</h4>
@@ -35,13 +30,11 @@
         </div>
       </div>
 
-      <!-- Menu Trigger Button -->
       <button type="button" class="nav-toggle-btn" id="navToggleBtn" aria-label="Buka Menu">
         <span data-icon="menu"></span>
       </button>
     </div>
 
-    <!-- Sidebar Navigation Drawer -->
     <aside class="nav-drawer" id="navDrawer">
       <div class="drawer-header">
         <span class="drawer-title">Navigasi</span>
@@ -100,6 +93,5 @@
   </div>
 </header>
 
-<!-- Global Backdrops -->
 <div class="nav-backdrop" id="navBackdrop"></div>
 <div class="weather-backdrop" id="weatherBackdrop"></div>

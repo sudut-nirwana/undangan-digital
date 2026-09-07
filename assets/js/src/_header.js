@@ -1,7 +1,6 @@
 (function() {
   'use strict';
 
-  // DOM ELEMENTS
   const navToggleBtn = document.getElementById('navToggleBtn');
   const navDrawer = document.getElementById('navDrawer');
   const drawerClose = document.getElementById('drawerClose');
@@ -15,7 +14,6 @@
   const submenuToggle = document.getElementById('submenuToggle');
   const submenuParent = submenuToggle?.closest('.has-submenu');
 
-  // NAVIGATION DRAWER LOGIC
   function openNav() {
     navDrawer?.classList.add('is-active');
     if (window.innerWidth <= 768) {
@@ -38,7 +36,6 @@
   drawerClose?.addEventListener('click', closeNav);
   navBackdrop?.addEventListener('click', closeNav);
 
-  // SUBMENU ACCORDION LOGIC
   if (submenuToggle && submenuParent) {
     submenuToggle.addEventListener('click', function(e) {
       e.preventDefault();
@@ -47,7 +44,6 @@
     });
   }
 
-  // WEATHER DROPDOWN / MODAL LOGIC
   function openWeather() {
     weatherCard?.classList.add('is-active');
     weatherBackdrop?.classList.add('is-active');
@@ -68,7 +64,6 @@
   weatherClose?.addEventListener('click', closeWeather);
   weatherBackdrop?.addEventListener('click', closeWeather);
 
-  // GLOBAL OUTSIDE CLICK (DESKTOP)
   document.addEventListener('click', function(e) {
     if (window.innerWidth > 768) {
       if (navDrawer && !navDrawer.contains(e.target) && !navToggleBtn?.contains(e.target)) {

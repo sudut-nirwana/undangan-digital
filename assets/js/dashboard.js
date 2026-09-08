@@ -254,7 +254,6 @@ function exportSubscribersCSV() {
     link.click();
     document.body.removeChild(link);
 }
-
 function renderArticlesTable() {
     const articlesTableBody = document.getElementById('articles-table-body');
     if (!articlesTableBody) return;
@@ -449,6 +448,77 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
         else { alert('Gagal menyimpan: ' + data.error); }
     } catch (err) { alert('Terjadi kesalahan jaringan saat menyimpan akun.'); }
 });
+
+async function processWithAI() {
+    const rawText = document.getElementById('ai-raw-input').value.trim();
+    const apiKey = document.getElementById('gemini-api-key').value.trim();
+    
+    if (!rawText) {
+        alert('Silakan masukkan draf mentah terlebih dahulu.');
+        return;
+    }
+    if (!apiKey) {
+        alert('Masukkan Gemini API Key terlebih dahulu.');
+        return;
+    }
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerText = '🤖 AI sedang memproses & memperkaya data...';
+
+    const prompt = `Anda adalah editor senior, sejarawan, dan content writer profesional untuk portal berita & lifestyle "Sudut Nirwana". Analisis draf mentah penulis, sempurnakan gaya bahasanya, lengkapi data/fakta sejarah atau informasi medis secara akurat dengan rujukan kredibel, dan berikan output HANYA dalam format JSON valid tanpa teks tambahan di luar JSON dengan struktur kunci berikut:
+{
+  "title": "Judul artikel yang menarik dan SEO-friendly (tambahkan [Part X] jika artikel berseri)",
+  "slug": "slug-url-singkat-maksimal-6-kata",
+  "category": "pilih salah satu yang valid dari daftar ini: jurnal, kuliner, lifestyle, musik, olahraga, otomotif, seni-budaya, wisata",
+  "popular": "true jika ini artikel tunggal atau Part 1 dari artikel berseri; isi 'false' jika ini Part 2, Part 3, atau seterusnya",
+  "description": "Ringkasan pendek (meta description) yang memikat pembaca",
+  "imageName": "nama-file-pendek-relevan.webp",
+  "tags": "tag1, tag2, tag3",
+  "content": "Isi lengkap artikel dalam format Markdown lengkap dengan heading (##, ###), teks tebal (**), penekanan (>), dan sisipkan tag komponen Liquid sbb: {% include alert-single.html category='nama_kategori' %} atau {% include alert-group.html category='nama_kategori' %} secara natural di sela-sela sub-bab."
+}
+
+Draf Mentah dari Penulis:
+${rawText}`;
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+
+        const data = await response.json();
+        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!textResponse) {
+            throw new Error('Gagal mendapatkan respons dari AI.');
+        }
+
+        const cleanedJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsedData = JSON.parse(cleanedJson);
+
+        document.getElementById('title').value = parsedData.title || '';
+        document.getElementById('slug').value = parsedData.slug || '';
+        document.getElementById('category').value = parsedData.category || 'lifestyle';
+        document.getElementById('popular').value = parsedData.popular || 'true';
+        document.getElementById('description').value = parsedData.description || '';
+        
+        let imgName = (parsedData.imageName || 'default.webp').trim().replace(/^\/+/, '');
+        document.getElementById('image').value = `/assets/images/posts/${imgName}`;
+        
+        document.getElementById('tags').value = parsedData.tags || '';
+        document.getElementById('content').value = parsedData.content || '';
+
+        alert('Berhasil! AI telah merapikan teks, melengkapi fakta, dan mengisi form.');
+    } catch (err) {
+        console.error(err);
+        alert('Gagal memproses AI: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = '✨ Format & Isi Otomatis dengan AI';
+    }
+}
 
 function escapeHtml(text) {
     if (!text) return '';

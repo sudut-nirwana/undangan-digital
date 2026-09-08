@@ -254,6 +254,7 @@ function exportSubscribersCSV() {
     link.click();
     document.body.removeChild(link);
 }
+
 function renderArticlesTable() {
     const articlesTableBody = document.getElementById('articles-table-body');
     if (!articlesTableBody) return;
@@ -276,6 +277,7 @@ function renderArticlesTable() {
                 <td>${escapeHtml(art.title)}</td>
                 <td>${escapeHtml(art.category || '-')}</td>
                 <td>
+                    <button type="button" onclick="triggerBroadcast('${art.id}')" style="background: #d69e2e; width: auto; padding: 5px 10px; font-size: 13px; margin-right: 5px; margin-bottom: 5px;">📢 Broadcast</button>
                     <button type="button" onclick="editArticle('${art.id}')" style="background: #319795; width: auto; padding: 5px 10px; font-size: 13px; margin-right: 5px; margin-bottom: 5px;">Edit</button>
                     <button type="button" class="btn-danger" onclick="deleteArticle('${art.id}')">Hapus</button>
                 </td>
@@ -451,7 +453,6 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
 
 async function processWithAI() {
     const rawText = document.getElementById('ai-raw-input').value.trim();
-    
     if (!rawText) {
         alert('Silakan masukkan draf mentah terlebih dahulu.');
         return;
@@ -469,13 +470,11 @@ async function processWithAI() {
         });
 
         const result = await response.json();
-
         if (!result.success) {
             throw new Error(result.error || 'Gagal memproses AI dari server.');
         }
 
         const parsedData = result.data;
-
         document.getElementById('title').value = parsedData.title || '';
         document.getElementById('slug').value = parsedData.slug || '';
         document.getElementById('category').value = parsedData.category || 'lifestyle';
@@ -498,9 +497,46 @@ async function processWithAI() {
     }
 }
 
+async function triggerBroadcast(articleId) {
+    const article = allArticles.find(a => a.id == articleId);
+    if (!article) {
+        alert('Artikel tidak ditemukan.');
+        return;
+    }
+
+    if (!confirm(`Kirim broadcast email untuk artikel "${article.title}" ke seluruh subscriber?`)) {
+        return;
+    }
+
+    alert('Proses broadcast sedang berjalan di background...');
+
+    try {
+        const res = await fetch('/api/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                admin_email: currentUser.email,
+                slug: article.slug,
+                title: article.title,
+                description: article.description,
+                image: article.image
+            })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            alert(`Berhasil! Email terkirim ke ${result.sent} dari ${result.total} subscriber.`);
+        } else {
+            alert('Gagal broadcast: ' + (result.error || 'Terjadi kesalahan'));
+        }
+    } catch (err) {
+        alert('Terjadi kesalahan jaringan saat mengirim broadcast.');
+    }
+}
+
 function escapeHtml(text) {
     if (!text) return '';
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 function logout() { location.reload(); }

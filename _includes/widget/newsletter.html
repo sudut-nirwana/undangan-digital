@@ -3,22 +3,54 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
     Newsletter
   </h3>
-  <p class="newsletter-desc">Dapatkan update resep dan informasi wisata terbaru langsung ke email kamu.</p>
+  <p class="newsletter-desc">Dapatkan update artikel pilihan, mulai dari gaya hidup, jurnal, hingga wawasan menarik lainnya langsung di kotak masuk Anda.</p>
+  
+  <!-- Form Berlangganan -->
   <form id="sidebarNewsletterForm" class="newsletter-form">
     <input type="email" id="sidebarEmail" placeholder="Email kamu..." required class="newsletter-input">
     <button type="submit" class="newsletter-btn">Berlangganan</button>
   </form>
+
+  <!-- Form Berhenti Berlangganan (Hidden Awalnya) -->
+  <form id="sidebarUnsubscribeForm" class="newsletter-form" style="display: none;">
+    <input type="email" id="sidebarUnsubscribeEmail" placeholder="Email untuk berhenti..." required class="newsletter-input">
+    <button type="submit" class="newsletter-btn-danger">Berhenti Berlangganan</button>
+  </form>
+
   <p id="newsletterMsg" style="font-size: 12px; margin-top: 6px; display: none;"></p>
+  
+  <div style="margin-top: 8px; text-align: right;">
+    <a href="#" id="toggleUnsubscribe" style="font-size: 11px; color: var(--text-muted); text-decoration: underline;">Ingin berhenti berlangganan?</a>
+  </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const sbForm = document.getElementById('sidebarNewsletterForm');
+    const unsubForm = document.getElementById('sidebarUnsubscribeForm');
+    const toggleLink = document.getElementById('toggleUnsubscribe');
+    const msgEl = document.getElementById('newsletterMsg');
+
+    if (toggleLink) {
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (sbForm.style.display !== 'none') {
+                sbForm.style.display = 'none';
+                unsubForm.style.display = 'flex';
+                toggleLink.innerText = 'Kembali ke Berlangganan';
+            } else {
+                sbForm.style.display = 'flex';
+                unsubForm.style.display = 'none';
+                toggleLink.innerText = 'Ingin berhenti berlangganan?';
+            }
+            msgEl.style.display = 'none';
+        });
+    }
+
     if (sbForm) {
         sbForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('sidebarEmail').value;
-            const msgEl = document.getElementById('newsletterMsg');
             try {
                 const res = await fetch('/api/subscribe', {
                     method: 'POST',
@@ -34,6 +66,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     msgEl.style.color = 'red';
                     msgEl.innerText = data.error || 'Gagal mendaftar.';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    }
+
+    if (unsubForm) {
+        unsubForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('sidebarUnsubscribeEmail').value;
+            try {
+                const res = await fetch('/api/unsubscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                msgEl.style.display = 'block';
+                if (data.success) {
+                    msgEl.style.color = 'green';
+                    msgEl.innerText = 'Berhasil berhenti berlangganan.';
+                    unsubForm.reset();
+                } else {
+                    msgEl.style.color = 'red';
+                    msgEl.innerText = data.error || 'Gagal memproses.';
                 }
             } catch (err) {
                 console.error(err);

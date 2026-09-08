@@ -62,3 +62,20 @@
     background: var(--color-primary);
   }
 }
+
+.newsletter-btn-danger {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: #e53e3e;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #c53030;
+  }
+}

@@ -1,8 +1,8 @@
 ---
 layout: content
-title: "Bandara Soekarno-Hatta Kembali Beroperasi Pasca-Erupsi Anak Krakatau: Mengapa Abu Vulkanik Begitu Berbahaya Bagi Penerbangan?"
-author: "Tavisha C Neira"
-date: 2026-09-08 13:09:45 +0700
+title: "Bandara Soekarno-Hatta Kembali Beroperasi Pasca-Erupsi Anak Krakatau"
+author: "Yossi Oktavia"
+date: 2026-09-08 00:00:00 +0700
 categories: [jurnal]
 tags: ["soekarno hatta", "anak krakatau", "abu vulkanik", "penerbangan", "airnav", "bmkg"]
 image: /assets/images/posts/bandara-soetta-anak-krakatau.webp
@@ -10,6 +10,8 @@ description: "Bandara Soekarno-Hatta resmi beroperasi kembali setelah sempat ter
 slug: "bandara-soetta-beroperasi-pasca-erupsi-krakatau"
 popular: "true"
 ---
+
+## Mengapa Abu Vulkanik Begitu Berbahaya Bagi Penerbangan?
 
 Aktivitas penerbangan di Bandara Internasional Soekarno-Hatta (CGK), Tangerang, Banten, dipastikan telah **kembali beroperasi secara normal** setelah sempat terganggu akibat sebaran abu vulkanik dari erupsi Anak Krakatau. Langkah penghentian sementara dan penundaan sejumlah penerbangan sebelumnya diambil oleh otoritas penerbangan guna memprioritaskan keselamatan penumpang dan kru udara.
 

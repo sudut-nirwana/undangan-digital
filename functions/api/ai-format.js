@@ -41,10 +41,14 @@ ${rawText}`;
         });
 
         const data = await response.json();
-        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
+        if (!response.ok) {
+            throw new Error(data.error?.message || `Google API Error (${response.status})`);
+        }
+
+        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!textResponse) {
-            throw new Error('Gagal mendapatkan respons dari Google AI.');
+            throw new Error('Respons dari Google AI kosong atau diblokir filter keamanan.');
         }
 
         const cleanedJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();

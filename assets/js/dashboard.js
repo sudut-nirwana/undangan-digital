@@ -451,14 +451,9 @@ document.getElementById('account-form').addEventListener('submit', async (e) => 
 
 async function processWithAI() {
     const rawText = document.getElementById('ai-raw-input').value.trim();
-    const apiKey = document.getElementById('gemini-api-key').value.trim();
     
     if (!rawText) {
         alert('Silakan masukkan draf mentah terlebih dahulu.');
-        return;
-    }
-    if (!apiKey) {
-        alert('Masukkan Gemini API Key terlebih dahulu.');
         return;
     }
 
@@ -466,37 +461,20 @@ async function processWithAI() {
     btn.disabled = true;
     btn.innerText = '🤖 AI sedang memproses & memperkaya data...';
 
-    const prompt = `Anda adalah editor senior, sejarawan, dan content writer profesional untuk portal berita & lifestyle "Sudut Nirwana". Analisis draf mentah penulis, sempurnakan gaya bahasanya, lengkapi data/fakta sejarah atau informasi medis secara akurat dengan rujukan kredibel, dan berikan output HANYA dalam format JSON valid tanpa teks tambahan di luar JSON dengan struktur kunci berikut:
-{
-  "title": "Judul artikel yang menarik dan SEO-friendly (tambahkan [Part X] jika artikel berseri)",
-  "slug": "slug-url-singkat-maksimal-6-kata",
-  "category": "pilih salah satu yang valid dari daftar ini: jurnal, kuliner, lifestyle, musik, olahraga, otomotif, seni-budaya, wisata",
-  "popular": "true jika ini artikel tunggal atau Part 1 dari artikel berseri; isi 'false' jika ini Part 2, Part 3, atau seterusnya",
-  "description": "Ringkasan pendek (meta description) yang memikat pembaca",
-  "imageName": "nama-file-pendek-relevan.webp",
-  "tags": "tag1, tag2, tag3",
-  "content": "Isi lengkap artikel dalam format Markdown lengkap dengan heading (##, ###), teks tebal (**), penekanan (>), dan sisipkan tag komponen Liquid sbb: {% include alert-single.html category='nama_kategori' %} atau {% include alert-group.html category='nama_kategori' %} secara natural di sela-sela sub-bab."
-}
-
-Draf Mentah dari Penulis:
-${rawText}`;
-
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch('/api/ai-format', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify({ rawText })
         });
 
-        const data = await response.json();
-        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const result = await response.json();
 
-        if (!textResponse) {
-            throw new Error('Gagal mendapatkan respons dari AI.');
+        if (!result.success) {
+            throw new Error(result.error || 'Gagal memproses AI dari server.');
         }
 
-        const cleanedJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedData = JSON.parse(cleanedJson);
+        const parsedData = result.data;
 
         document.getElementById('title').value = parsedData.title || '';
         document.getElementById('slug').value = parsedData.slug || '';
